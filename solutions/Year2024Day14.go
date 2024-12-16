@@ -55,7 +55,7 @@ func Day14_2024_Part1() {
 	answer := q1 * q2 * q3 * q4
 	fmt.Println("Answer:", answer)
 }
-// 169
+
 func Day14_2024_Part2() {
 	defer utils.CodeTimer()()
 	INPUT_PATH := "./inputs/Year2024Day14.txt"
