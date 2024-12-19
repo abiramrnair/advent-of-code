@@ -6,10 +6,10 @@ type Coord struct {
 }
 
 var Grid4Directions = []Coord{
-	{Row: 1, Col: 0},
 	{Row: -1, Col: 0},
-	{Row: 0, Col: 1},
+	{Row: 1, Col: 0},
 	{Row: 0, Col: -1},
+	{Row: 0, Col: 1},
 }
 
 type Queue struct {
@@ -36,4 +36,9 @@ func (q Queue) Size() int {
 
 func (q Queue) IsEmpty() bool {
 	return q.Size() == 0
+}
+
+func (q *Queue) Clear() *Queue {
+	q.Elements = nil
+	return q
 }
