@@ -2,7 +2,9 @@ package solutions
 
 import (
 	"aoc/utils"
+	"container/heap"
 	"fmt"
+	"math"
 )
 
 type CoordWithDirection struct {
@@ -23,7 +25,20 @@ func Day16_2024_Part1() {
 		fmt.Println(err)
 	}
 	adjacencyList := generateDay16AdjacencyList(input)
-	answer := djikstraDay16(adjacencyList)
+	var starting CoordWithDirection
+	var ending CoordWithDirection
+	ROWS,COLS := len(input),len(input[0])
+	for r := 0; r < ROWS; r++ {
+		for c := 0; c < COLS; c++ {
+			if input[r][c] == "S" {
+				starting.Coord = utils.Coord{Row: r, Col: c}
+				starting.Direction = "right"
+			} else if input[r][c] == "E" {
+				ending.Coord = utils.Coord{Row: r, Col: c}
+			}
+		}
+	}
+	answer := djikstraDay16(adjacencyList, starting, ending)
 	fmt.Println("Answer:", answer)
 }
 
@@ -37,9 +52,46 @@ func Day16_2024_Part2() {
 	fmt.Println(input)
 }
 
-func djikstraDay16(adjacencyList map[CoordWithDirection][]Day16AdjacencyNode) int {
-	fmt.Println(adjacencyList)
-	return 0
+func djikstraDay16(
+	adjacencyList map[CoordWithDirection][]Day16AdjacencyNode, 
+	starting CoordWithDirection, 
+	ending CoordWithDirection,
+) int {
+	visited := make(map[CoordWithDirection]bool)
+	distances := make(map[CoordWithDirection]int)
+	for k := range adjacencyList {
+		visited[k] = false
+		distances[k] = math.MaxInt
+	}
+	pq := make(utils.PriorityQueue,0)
+	heap.Init(&pq)
+	heap.Push(&pq, &utils.PqItem{Value: starting, Priority: 0})
+	for pq.Len() > 0 {
+		currentNode := heap.Pop(&pq).(*utils.PqItem)
+		currentCoord := currentNode.Value.(CoordWithDirection)
+		currentDistance := currentNode.Priority
+		visited[currentCoord] = true
+		for _,edge := range adjacencyList[currentCoord] {
+			val := visited[edge.CoordWithDirection]
+			if val {
+				continue
+			}
+			newDistance := currentDistance + edge.Distance
+			if newDistance < distances[edge.CoordWithDirection] {
+				distances[edge.CoordWithDirection] = newDistance
+				heap.Push(&pq, &utils.PqItem{Value: edge.CoordWithDirection, Priority: newDistance})
+			}
+		}
+	}
+	minDistance := math.MaxInt
+	for k,v := range distances {
+		if k.Row == ending.Row && k.Col == ending.Col {
+			if v < minDistance {
+				minDistance = v
+			}
+		}
+	}
+	return minDistance
 }
 
 func generateDay16AdjacencyList(grid [][]string) map[CoordWithDirection][]Day16AdjacencyNode {
@@ -77,7 +129,7 @@ func generateDay16AdjacencyList(grid [][]string) map[CoordWithDirection][]Day16A
 								},
 							}
 							if nextDirection != direction {
-								adjacencyNode.Distance = 1000
+								adjacencyNode.Distance = 1001
 							} else {
 								adjacencyNode.Distance = 1
 							}
