@@ -27,7 +27,7 @@ func Day16_2024_Part1() {
 	adjacencyList := generateDay16AdjacencyList(input)
 	var starting CoordWithDirection
 	var ending CoordWithDirection
-	ROWS,COLS := len(input),len(input[0])
+	ROWS, COLS := len(input), len(input[0])
 	for r := 0; r < ROWS; r++ {
 		for c := 0; c < COLS; c++ {
 			if input[r][c] == "S" {
@@ -45,16 +45,32 @@ func Day16_2024_Part1() {
 func Day16_2024_Part2() {
 	defer utils.CodeTimer()()
 	INPUT_PATH := "./inputs/Year2024Day16.txt"
-	input, err := utils.GetInputAsArrayOfStrings(INPUT_PATH)
+	input, err := utils.GetInputAs2DArrayOfStrings(INPUT_PATH)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(input)
+	adjacencyList := generateDay16AdjacencyList(input)
+	var starting CoordWithDirection
+	var ending CoordWithDirection
+	ROWS, COLS := len(input), len(input[0])
+	for r := 0; r < ROWS; r++ {
+		for c := 0; c < COLS; c++ {
+			if input[r][c] == "S" {
+				starting.Coord = utils.Coord{Row: r, Col: c}
+				starting.Direction = "right"
+			} else if input[r][c] == "E" {
+				ending.Coord = utils.Coord{Row: r, Col: c}
+				ending.Direction = "up"
+			}
+		}
+	}
+	answer := djikstraDay16Pt2(input, adjacencyList, starting, ending)
+	fmt.Println("Answer:", answer)
 }
 
 func djikstraDay16(
-	adjacencyList map[CoordWithDirection][]Day16AdjacencyNode, 
-	starting CoordWithDirection, 
+	adjacencyList map[CoordWithDirection][]Day16AdjacencyNode,
+	starting CoordWithDirection,
 	ending CoordWithDirection,
 ) int {
 	visited := make(map[CoordWithDirection]bool)
@@ -63,7 +79,7 @@ func djikstraDay16(
 		visited[k] = false
 		distances[k] = math.MaxInt
 	}
-	pq := make(utils.PriorityQueue,0)
+	pq := make(utils.PriorityQueue, 0)
 	heap.Init(&pq)
 	heap.Push(&pq, &utils.PqItem{Value: starting, Priority: 0})
 	for pq.Len() > 0 {
@@ -71,7 +87,7 @@ func djikstraDay16(
 		currentCoord := currentNode.Value.(CoordWithDirection)
 		currentDistance := currentNode.Priority
 		visited[currentCoord] = true
-		for _,edge := range adjacencyList[currentCoord] {
+		for _, edge := range adjacencyList[currentCoord] {
 			val := visited[edge.CoordWithDirection]
 			if val {
 				continue
@@ -84,7 +100,7 @@ func djikstraDay16(
 		}
 	}
 	minDistance := math.MaxInt
-	for k,v := range distances {
+	for k, v := range distances {
 		if k.Row == ending.Row && k.Col == ending.Col {
 			if v < minDistance {
 				minDistance = v
@@ -92,6 +108,67 @@ func djikstraDay16(
 		}
 	}
 	return minDistance
+}
+
+func djikstraDay16Pt2(
+	grid [][]string,
+	adjacencyList map[CoordWithDirection][]Day16AdjacencyNode,
+	starting CoordWithDirection,
+	ending CoordWithDirection,
+) int {
+	previous := make(map[CoordWithDirection][]CoordWithDirection)
+	visited := make(map[CoordWithDirection]bool)
+	distances := make(map[CoordWithDirection]int)
+	for k := range adjacencyList {
+		visited[k] = false
+		distances[k] = math.MaxInt
+		previous[k] = make([]CoordWithDirection, 0)
+	}
+	pq := make(utils.PriorityQueue, 0)
+	heap.Init(&pq)
+	heap.Push(&pq, &utils.PqItem{Value: starting, Priority: 0})
+	for pq.Len() > 0 {
+		currentNode := heap.Pop(&pq).(*utils.PqItem)
+		currentCoord := currentNode.Value.(CoordWithDirection)
+		currentDistance := currentNode.Priority
+		visited[currentCoord] = true
+		for _, edge := range adjacencyList[currentCoord] {
+			val := visited[edge.CoordWithDirection]
+			if val {
+				continue
+			}
+			newDistance := currentDistance + edge.Distance
+			if newDistance <= distances[edge.CoordWithDirection] {
+				distances[edge.CoordWithDirection] = newDistance
+				shouldAppend := true
+				for _, c := range previous[edge.CoordWithDirection] {
+					if c.Coord == currentCoord.Coord && c.Direction == currentCoord.Direction {
+						shouldAppend = false
+					}
+				}
+				if shouldAppend {
+					previous[edge.CoordWithDirection] = append(previous[edge.CoordWithDirection], currentCoord)
+				}
+				heap.Push(&pq, &utils.PqItem{Value: edge.CoordWithDirection, Priority: newDistance})
+			}
+		}
+	}
+	path := make([]CoordWithDirection, 0)
+	uniquePaths := make(map[CoordWithDirection]bool)
+	doDfsOnPrevious(previous, starting, ending, path, uniquePaths)
+	for c := range uniquePaths {
+		grid[c.Coord.Row][c.Coord.Col] = "O"
+	}
+	count := 0
+	ROWS, COLS := len(grid), len(grid[0])
+	for i := 0; i < ROWS; i++ {
+		for j := 0; j < COLS; j++ {
+			if grid[i][j] == "O" {
+				count += 1
+			}
+		}
+	}
+	return count
 }
 
 func generateDay16AdjacencyList(grid [][]string) map[CoordWithDirection][]Day16AdjacencyNode {
@@ -141,4 +218,28 @@ func generateDay16AdjacencyList(grid [][]string) map[CoordWithDirection][]Day16A
 		}
 	}
 	return adjList
+}
+
+func doDfsOnPrevious(
+	m map[CoordWithDirection][]CoordWithDirection,
+	start CoordWithDirection,
+	curr CoordWithDirection,
+	path []CoordWithDirection,
+	uniquePaths map[CoordWithDirection]bool,
+) {
+	path = append(path, curr)
+	if curr.Coord == start.Coord && curr.Direction == start.Direction {
+		// Print out different path lengths to find out the shortest path length to filter for.
+		if len(path) == 501 {
+			for _, p := range path {
+				uniquePaths[p] = true
+			}
+		}
+		return
+	}
+	for _, v := range m[curr] {
+		newPath := make([]CoordWithDirection, 0)
+		newPath = append(newPath, path...)
+		doDfsOnPrevious(m, start, v, newPath, uniquePaths)
+	}
 }

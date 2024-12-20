@@ -48,9 +48,9 @@ func (q *Queue) Clear() *Queue {
 }
 
 type PqItem struct {
-	Value interface{}
+	Value    interface{}
 	Priority int
-	Index int
+	Index    int
 }
 
 type PriorityQueue []*PqItem
@@ -58,7 +58,7 @@ type PriorityQueue []*PqItem
 func (pq PriorityQueue) Len() int { return len(pq) }
 
 func (pq PriorityQueue) Less(i, j int) bool { // Change this to toggle highest/lowest priority pop.
-	return pq[i].Priority < pq[j].Priority
+	return pq[i].Priority <= pq[j].Priority
 }
 
 func (pq PriorityQueue) Swap(i, j int) {
