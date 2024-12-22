@@ -28,3 +28,7 @@ func CodeTimer() func() {
 func IsWholeNumber(x float64) bool {
 	return math.Ceil(x) == x
 }
+
+func PowInt(x, y int) int {
+    return int(math.Pow(float64(x), float64(y)))
+}
