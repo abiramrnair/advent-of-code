@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	solutions.Day17_2024_Part1()
-	// solutions.Day17_2024_Part2()
+	// solutions.Day2_2025_Part1()
+	solutions.Day2_2025_Part2()
 }
