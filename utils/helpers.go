@@ -30,5 +30,12 @@ func IsWholeNumber(x float64) bool {
 }
 
 func PowInt(x, y int) int {
-    return int(math.Pow(float64(x), float64(y)))
+	return int(math.Pow(float64(x), float64(y)))
+}
+
+func MaxNumber(a int, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
